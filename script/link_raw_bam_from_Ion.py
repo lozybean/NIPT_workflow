@@ -9,6 +9,8 @@
 import argparse
 import re
 
+from path import Path
+
 
 def read_args():
     parser = argparse.ArgumentParser(description=__doc__,
@@ -26,6 +28,10 @@ def read_args():
 
 def print_link(raw_bam_dir, link_bam_dir):
     re_pooling_num = re.compile('(\d+)-HZDA-HIQ-pooling')
+    raw_bam_dir = Path(raw_bam_dir).abspath()
+    link_bam_dir = Path(link_bam_dir).abspath()
+    if not link_bam_dir.exists():
+        link_bam_dir.mkdir_p()
     for pooling in raw_bam_dir.dirs('*HZDA-HIQ*'):
         pooling_num = re_pooling_num.search(pooling.namebase).group(1)
         pooling_num = int(pooling_num)
@@ -33,8 +39,12 @@ def print_link(raw_bam_dir, link_bam_dir):
             continue
         basecaller_result = pooling / 'basecaller_results'
         for bam_file in basecaller_result.files('*.basecaller.bam'):
-            if bam_file.size > 10000000 and not bam_file.namebase.startswith('nomatch'):
-                link_name = link_bam_dir / bam_file.namebase.replace('IonXpress', f'Pool_{pooling_num}')
+            if bam_file.namebase.startswith('rawtf'):
+                continue
+            if bam_file.namebase.startswith('nomatch'):
+                continue
+            if bam_file.size > 1000000000:
+                link_name = link_bam_dir / bam_file.name.replace('IonXpress', f'Pool_{pooling_num}')
                 print(f'ln -s {bam_file} {link_name}')
 
 
