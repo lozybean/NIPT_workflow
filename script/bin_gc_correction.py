@@ -5,6 +5,7 @@
 @date = '2018/1/31 0031'
 
 bin gc correction, cite: Fan_and_Quake
+and lowess correction
 """
 import argparse
 import re
@@ -14,6 +15,7 @@ from functools import lru_cache
 import matplotlib as mpl
 import numpy as np
 import pysam
+from Bio.Statistics.lowess import lowess
 
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -49,9 +51,9 @@ class Work(object):
                             metavar='INT', type=int, default=30,
                             help="minimum mapping quality")
         parser.add_argument('-o', '--over_abundant', dest='over_abundant',
-                            metavar='INT', type=int, default=5,
+                            metavar='INT', type=int, default=3,
                             help="how many times of average depth will be recognized as "
-                                 "\"OVER ABUNDANT\", [default is 5]")
+                                 "\"OVER ABUNDANT\", [default is 3]")
         parser.add_argument('--plot_bin_count', dest='plot_bin_count',
                             metavar='FILE', type=str, default=None,
                             help="plot bin count before and after gc correction")
@@ -138,21 +140,37 @@ class Work(object):
         total_depth = sum(bin_counts[b] for b in bin_list)
         return total_depth / len(bin_list)
 
-    def gc_correct_bin_counts(self):
+    def gc_correct_bin_counts(self, raw_counts):
         rt_dict = defaultdict(int)
         average_depth_before_correct = {}
         weight_dict = {}
         average_depth_after_correct = {}
         global_average_depth = self.get_global_average_depth()
         for gc_content, bin_list in self.gc2bin.items():
-            average_depth = self.average_depth_in_gc(self.bin_counts, gc_content)
+            average_depth = self.average_depth_in_gc(raw_counts, gc_content)
             average_depth_before_correct[gc_content] = average_depth
             weight = global_average_depth / average_depth
             weight_dict[gc_content] = weight
             for b in bin_list:
-                rt_dict[b] = self.bin_counts[b] * weight
+                rt_dict[b] = raw_counts[b] * weight
             average_depth_after_correct[gc_content] = self.average_depth_in_gc(rt_dict, gc_content)
         return rt_dict, average_depth_before_correct, average_depth_after_correct, weight_dict
+
+    def gc_correct_lowess(self, raw_counts):
+        rt_dict = {}
+        for gc_content, bin_list in self.gc2bin.items():
+            value_list = np.array([raw_counts[b] for b in bin_list])
+            if len(value_list) < 3:
+                cor_value_list = value_list
+            else:
+                average_depth = self.average_depth_in_gc(raw_counts, gc_content)
+                # key_list, value_list = zip(*sorted(bin_counts.items()))
+                x = np.array(range(len(bin_list)))
+                ur_loess = lowess(x, value_list)
+                cor_value_list = value_list - (ur_loess - average_depth)
+            for b, v in zip(bin_list, cor_value_list):
+                rt_dict[b] = v
+        return rt_dict
 
     @staticmethod
     def plot_bin_count_scatter(depth_dict_before, depth_dict_after, weight_dict,
@@ -275,7 +293,9 @@ class Work(object):
         plt.close()
 
     def __call__(self, *args, **kwargs):
-        gc_correct_depth, average_depth_before, average_depth_after, weight_dict = self.gc_correct_bin_counts()
+        (gc_correct_depth, average_depth_before,
+         average_depth_after, weight_dict) = self.gc_correct_bin_counts(self.bin_counts)
+        gc_correct_depth = self.gc_correct_lowess(gc_correct_depth)
 
         if self.args.plot_bin_count is not None:
             self.plot_bin_count_scatter(average_depth_before, average_depth_after, weight_dict,
