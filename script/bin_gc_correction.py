@@ -55,6 +55,9 @@ class Work(object):
         parser.add_argument('--plot_bin_count', dest='plot_bin_count',
                             metavar='FILE', type=str, default=None,
                             help="plot bin count before and after gc correction")
+        parser.add_argument('--plot_bin_box', dest='plot_bin_box',
+                            metavar='FILE', type=str, default=None,
+                            help="box-plot bin count before and after gc correction")
         parser.add_argument('--plot_distribution', dest='plot_distribution',
                             metavar='FILE', type=str, default=None,
                             help="plot reads distribution among bins")
@@ -189,6 +192,44 @@ class Work(object):
             plt.show()
         plt.close()
 
+    def plot_bin_count_box(self, counts_before, counts_after, out_file=None):
+        depth_list_before = []
+        depth_list_after = []
+        gc_list = sorted(self.gc2bin.keys())
+        min_gc = min(int(gc) for gc in gc_list)
+        max_gc = max(int(gc) for gc in gc_list)
+        int_gc_list = np.arange(min_gc, max_gc + 0.5, 0.5)
+        for gc in int_gc_list:
+            list_before = []
+            list_after = []
+            gc_list = [i for i in self.gc2bin.keys() if gc <= i < gc + 1]
+            for gc in gc_list:
+                for b in self.gc2bin[gc]:
+                    list_before.append(counts_before[b])
+                    list_after.append(counts_after[b])
+            depth_list_before.append(list_before)
+            depth_list_after.append(list_after)
+
+        plt.figure(figsize=(10, 20))
+
+        plt.subplot(2, 1, 1)
+        plt.boxplot(depth_list_before, sym='k.', positions=int_gc_list)
+        plt.xlabel('gc content(%)')
+        plt.ylabel('depth per bin')
+        plt.title("before correct")
+
+        plt.subplot(2, 1, 2)
+        plt.boxplot(depth_list_after, sym='k.', positions=int_gc_list)
+        plt.xlabel('gc content(%)')
+        plt.ylabel('depth per bin')
+        plt.title("after correct")
+
+        if out_file:
+            plt.savefig(out_file, dpi=4000)
+        else:
+            plt.show()
+        plt.close()
+
     def plot_distribution(self, raw_counts, cor_counts, weight_dict, out_file=None):
         def plot_chrom(chrom, ind):
             dict_before = {p[1]: c for p, c in raw_counts.items() if p[0] == chrom}
@@ -228,7 +269,7 @@ class Work(object):
         plt.subplots_adjust(hspace=0.5)
 
         if out_file:
-            plt.savefig(out_file, dpi=4000)
+            plt.savefig(out_file, dpi=40)
         else:
             plt.show()
         plt.close()
@@ -243,6 +284,9 @@ class Work(object):
         if self.args.plot_distribution is not None:
             self.plot_distribution(self.bin_counts, gc_correct_depth, weight_dict,
                                    out_file=self.args.plot_distribution)
+
+        if self.args.plot_bin_box is not None:
+            self.plot_bin_count_box(self.bin_counts, gc_correct_depth, out_file=self.args.plot_bin_box)
 
 
 if __name__ == '__main__':
