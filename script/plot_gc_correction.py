@@ -9,27 +9,32 @@ and lowess correction
 """
 import argparse
 import re
-from collections import defaultdict
 from functools import lru_cache
 
 import matplotlib as mpl
 import numpy as np
-import pysam
-from Bio.Statistics.lowess import lowess
+from NIPT_workflow.utils.bam_reader import read_bin_counts
+from NIPT_workflow.utils.gc_correction import (
+    read_gc_percent_file,
+    gc_correct_bin_counts_expand,
+    gc_correct_lowess,
+)
 
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 re_variable = re.compile('variableStep chrom=(\w+) span=(\d+)')
 
-gc20kBase = '/mnt/analysis/NIPT_workflow/workspace/work_shell/hg19.gc20kBase.txt'
+gc20kBase = '/bio01/database/genome/hg19/primary23/hg19.gc20kBase.txt'
 
 
 class Work(object):
     def __init__(self):
-        self.gc2bin, self.bin2gc = self.read_gc_percent_file()
-        self.bin_counts = self.read_bin_counts()
-        self.gc2bin, self.bin_counts = self.filter_bins()
+        self.gc2bin, self.bin2gc = read_gc_percent_file(self.args.gc_percent, bin_size=self.args.bin_size)
+        self.bin_counts, self.gc2bin = read_bin_counts(self.args.bam_in, gc2bin=self.gc2bin,
+                                                       bin_size=self.args.bin_size, min_mq=self.args.min_mq,
+                                                       over_abundant=self.args.over_abundant)
+        # self.gc2bin, self.bin_counts = self.filter_bins()
 
     @property
     @lru_cache(1)
@@ -65,112 +70,6 @@ class Work(object):
                             help="plot reads distribution among bins")
         args = parser.parse_args()
         return args
-
-    def read_gc_percent_file(self):
-        gc_bin = defaultdict(list)
-        bin_gc = {}
-        with open(self.args.gc_percent) as fp:
-            chrom, span = None, None
-            for line in fp:
-                if line.startswith('variableStep'):
-                    chrom, span = re_variable.search(line).groups()
-                    span = int(span)
-                    if span != self.args.bin_size:
-                        raise ValueError("bin_size do not match in gc_percent file!")
-                    continue
-                start, gc_content = line.strip().split('\t')
-                gc_content = float(gc_content)
-                if not gc_content:
-                    continue
-                start = int(start)
-                end = start + span - 1
-                gc_bin[gc_content].append((chrom, start, end))
-                bin_gc[(chrom, start, end)] = gc_content
-        return gc_bin, bin_gc
-
-    def filter_bins(self):
-        global_average_depth = self.get_global_average_depth()
-        gc2bin = {}
-        bin_counts = {}
-        for gc, bins in self.gc2bin.items():
-            clean_bins = []
-            for b in bins:
-                if not self.bin_counts[b]:
-                    # filter no reads bins
-                    continue
-                if self.bin_counts[b] > global_average_depth * self.args.over_abundant:
-                    # filter over abundant bins:
-                    continue
-                bin_counts[b] = self.bin_counts[b]
-                clean_bins.append(b)
-            if clean_bins:
-                gc2bin[gc] = clean_bins
-        return gc2bin, bin_counts
-
-    def reads_filter(self, record):
-        if record.mapping_quality < self.args.min_mq:
-            return True
-        if record.is_supplementary:
-            return True
-        if record.is_secondary:
-            return True
-        return False
-
-    def falling_within_bin(self, record):
-        chrom = record.reference_name
-        start = record.reference_start // self.args.bin_size * self.args.bin_size + 1
-        end = start + self.args.bin_size - 1
-        return chrom, start, end
-
-    def get_global_average_depth(self):
-        return np.mean(list(self.bin_counts.values()))
-
-    def read_bin_counts(self):
-        bam_file = pysam.AlignmentFile(self.args.bam_in)
-        count_bins = defaultdict(int)
-        for record in bam_file:
-            if self.reads_filter(record):
-                continue
-            bin_key = self.falling_within_bin(record)
-            count_bins[bin_key] += 1
-        return count_bins
-
-    def average_depth_in_gc(self, bin_counts, gc_content):
-        bin_list = self.gc2bin[gc_content]
-        total_depth = sum(bin_counts[b] for b in bin_list)
-        return total_depth / len(bin_list)
-
-    def gc_correct_bin_counts(self, raw_counts):
-        rt_dict = defaultdict(int)
-        average_depth_before_correct = {}
-        weight_dict = {}
-        average_depth_after_correct = {}
-        global_average_depth = self.get_global_average_depth()
-        for gc_content, bin_list in self.gc2bin.items():
-            average_depth = self.average_depth_in_gc(raw_counts, gc_content)
-            average_depth_before_correct[gc_content] = average_depth
-            weight = global_average_depth / average_depth
-            weight_dict[gc_content] = weight
-            for b in bin_list:
-                rt_dict[b] = raw_counts[b] * weight
-            average_depth_after_correct[gc_content] = self.average_depth_in_gc(rt_dict, gc_content)
-        return rt_dict, average_depth_before_correct, average_depth_after_correct, weight_dict
-
-    def gc_correct_lowess(self, raw_counts):
-        rt_dict = {}
-        for gc_content, bin_list in self.gc2bin.items():
-            value_list = np.array([raw_counts[b] for b in bin_list])
-            if len(value_list) < 3:
-                cor_value_list = value_list
-            else:
-                average_depth = self.average_depth_in_gc(raw_counts, gc_content)
-                # key_list, value_list = zip(*sorted(bin_counts.items()))
-                x = np.array(range(len(bin_list)))
-                ur_loess = lowess(x, value_list)
-                cor_value_list = value_list - (ur_loess - average_depth)
-            for b, v in zip(bin_list, cor_value_list):
-                rt_dict[b] = v
-        return rt_dict
 
     @staticmethod
     def plot_bin_count_scatter(depth_dict_before, depth_dict_after, weight_dict,
@@ -294,8 +193,8 @@ class Work(object):
 
     def __call__(self, *args, **kwargs):
         (gc_correct_depth, average_depth_before,
-         average_depth_after, weight_dict) = self.gc_correct_bin_counts(self.bin_counts)
-        gc_correct_depth = self.gc_correct_lowess(gc_correct_depth)
+         average_depth_after, weight_dict) = gc_correct_bin_counts_expand(self.gc2bin, self.bin_counts)
+        gc_correct_depth = gc_correct_lowess(self.gc2bin, gc_correct_depth)
 
         if self.args.plot_bin_count is not None:
             self.plot_bin_count_scatter(average_depth_before, average_depth_after, weight_dict,
