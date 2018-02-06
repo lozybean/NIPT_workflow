@@ -8,7 +8,9 @@
 import argparse
 from functools import lru_cache
 
-from NIPT_workflow.utils.bam_reader import read_bin_counts, get_ratio_in_chrom
+from NIPT_workflow.utils.bam_reader import (
+    read_bin_counts, get_ratio_in_chrom, stat_bam_file
+)
 from NIPT_workflow.utils.gc_correction import (
     read_gc_percent_file,
 )
@@ -19,13 +21,15 @@ gc20kBase = '/bio01/database/genome/hg19/primary23/hg19.gc20kBase.txt'
 class Work(object):
     def __init__(self):
         self.gc2bin, self.bin2gc = read_gc_percent_file(self.args.gc_percent, bin_size=self.args.bin_size)
-        self.bin_counts, self.gc2bin, self.gc_content = read_bin_counts(
+        self.bin_counts, self.gc2bin = read_bin_counts(
             self.args.bam_in, gc2bin=self.gc2bin,
             bin_size=self.args.bin_size,
             min_mq=self.args.min_mq,
             over_abundant=self.args.over_abundant,
-            return_gc_percent=True,
         )
+        self.stats = stat_bam_file(self.args.bam_in, self.bin_counts,
+                                   bin_size=self.args.bin_size,
+                                   min_mq=self.args.min_mq)
 
     @property
     @lru_cache(1)
@@ -59,7 +63,9 @@ class Work(object):
     def __call__(self, *args, **kwargs):
         ratio_in_chrom = get_ratio_in_chrom(self.bin_counts)
         with open(self.args.output, 'w') as fp:
-            print("#Sample GC content (%)", self.gc_content * 100, sep='\t', file=fp)
+            print("#gc_content", self.stats['gc_content'] * 100, sep='\t', file=fp)
+            print('#total_bases', self.stats['total_bases'], sep='\t', file=fp)
+            print('#usable_reads', self.stats['usable_reads'], sep='\t', file=fp)
             print('chrom', 'reads_ratio', sep='\t', file=fp)
             for chrom, ratio in ratio_in_chrom.items():
                 print(chrom, ratio, sep='\t', file=fp)

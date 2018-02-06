@@ -23,35 +23,49 @@ def falling_within_bin(record, bin_size):
 
 def read_bin_counts(bam_file, gc2bin,
                     bin_size=20000, min_mq=15,
-                    over_abundant=3, return_gc_percent=False):
+                    over_abundant=3):
     """
     :param bam_file: input bam file, sorted with index
     :param gc2bin: a dict like: {gc: bins}
     :param bin_size: bin size
     :param min_mq: min mapping quality
     :param over_abundant: How many times the average reads in a bin will be considered as over abundant bin.
-    :param return_gc_percent: if return gc percent additional
-    :return: count of bins, filtered gc2bin dict, total gc_percent if with_gc is True
+    :return: count of bins, filtered gc2bin dict
     """
-    gc_bases = 0
-    total_bases = 0
     bam_file = pysam.AlignmentFile(bam_file)
     count_bins = defaultdict(int)
     for record in bam_file:
         if reads_filter(record, min_mq):
             continue
-        if return_gc_percent:
-            gc_bases += record.seq.count('G')
-            gc_bases += record.seq.count('C')
-            total_bases += len(record.seq)
         bin_key = falling_within_bin(record, bin_size)
         count_bins[bin_key] += 1
     gc2bin, count_bins = filter_bins(raw_counts=count_bins, gc2bin=gc2bin,
                                      over_abundant=over_abundant)
-    if return_gc_percent:
-        return count_bins, gc2bin, gc_bases / total_bases
-    else:
-        return count_bins, gc2bin
+    return count_bins, gc2bin
+
+
+def stat_bam_file(bam_file, accept_bins,
+                  bin_size=20000,
+                  min_mq=15):
+    bam_file = pysam.AlignmentFile(bam_file)
+    gc_bases = 0
+    total_reads = 0
+    total_bases = 0
+    for record in bam_file:
+        if reads_filter(record, min_mq):
+            continue
+        bin_key = falling_within_bin(record, bin_size)
+        if bin_key in accept_bins:
+            total_reads += 1
+            gc_bases += record.seq.count('G')
+            gc_bases += record.seq.count('C')
+            total_bases += len(record.seq)
+
+    return {
+        'gc_content': gc_bases / total_bases,
+        'total_bases': total_bases,
+        'usable_reads': total_reads,
+    }
 
 
 def get_reads_in_chrom(bin_counts):
