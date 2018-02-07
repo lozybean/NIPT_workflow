@@ -6,7 +6,6 @@ from django.db import models
 class Run(models.Model):
     pool_number = models.IntegerField(verbose_name='仪器Pooling编号')
     pool_lab = models.IntegerField(verbose_name='实验室Pooling编号')
-    seq_date = models.DateField(verbose_name='上机日期')
     home_dir = models.CharField(max_length=200, verbose_name='目录全名')
 
     def __str__(self):
@@ -14,17 +13,18 @@ class Run(models.Model):
 
 
 class Sample(models.Model):
-    run = models.ForeignKey(Run, verbose_name='Pool', on_delete=False)
+    run = models.ForeignKey(Run, verbose_name='Pool', null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=100, verbose_name='样本编号')
     seq_barcode = models.CharField(max_length=100, verbose_name='上机条码号')
-    barcode = models.CharField(max_length=100, verbose_name='样本条码号')
+    bam_file = models.CharField(max_length=100, verbose_name='原始bam文件')
+    barcode = models.CharField(max_length=100, blank=True, null=True, verbose_name='样本条码号')
 
     def __str__(self):
         return self.name
 
 
 class ClinicalInfo(models.Model):
-    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=True)
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     age = models.IntegerField(verbose_name='年龄')
     pregnant_week = models.CharField(max_length=50, verbose_name='孕周')
     BMI = models.IntegerField(verbose_name='BMI')
@@ -40,7 +40,7 @@ class ClinicalInfo(models.Model):
 
 
 class AnalysisInfo(models.Model):
-    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=True)
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     gc_content = models.FloatField(verbose_name='gc含量(%)')
     usable_reads = models.IntegerField(verbose_name='可用reads数')
     aneuploid = models.BooleanField(default=False, verbose_name='是否为非整倍体')
@@ -54,7 +54,7 @@ class AnalysisInfo(models.Model):
 
 class Coverage(models.Model):
     chrom = models.TextField(max_length=20, verbose_name='染色体')
-    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=True)
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Coverage(%)')
     chr2 = models.FloatField(verbose_name='Chr2 Coverage(%)')
     chr3 = models.FloatField(verbose_name='Chr3 Coverage(%)')
@@ -80,10 +80,13 @@ class Coverage(models.Model):
     chrX = models.FloatField(verbose_name='ChrX Coverage(%)')
     chrY = models.FloatField(verbose_name='ChrY Coverage(%)')
 
+    def __str__(self):
+        return f'Coverage of {self.sample.name}'
+
 
 class Epsilon(models.Model):
     chrom = models.TextField(max_length=20, verbose_name='染色体')
-    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=True)
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Epsilon')
     chr2 = models.FloatField(verbose_name='Chr2 Epsilon')
     chr3 = models.FloatField(verbose_name='Chr3 Epsilon')
@@ -109,10 +112,13 @@ class Epsilon(models.Model):
     chrX = models.FloatField(verbose_name='ChrX Epsilon')
     chrY = models.FloatField(verbose_name='ChrY Epsilon')
 
+    def __str__(self):
+        return f'Epsilon of {self.sample.name}'
+
 
 class ZScore(models.Model):
     chrom = models.TextField(max_length=20, verbose_name='染色体')
-    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=True)
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Z-Score')
     chr2 = models.FloatField(verbose_name='Chr2 Z-Score')
     chr3 = models.FloatField(verbose_name='Chr3 Z-Score')
@@ -137,3 +143,6 @@ class ZScore(models.Model):
     chr22 = models.FloatField(verbose_name='Chr22 Z-Score')
     chrX = models.FloatField(verbose_name='ChrX Z-Score')
     chrY = models.FloatField(verbose_name='ChrY Z-Score')
+
+    def __str__(self):
+        return f'Z-Score of {self.sample.name}'
