@@ -18,6 +18,7 @@ class Sample(models.Model):
     seq_barcode = models.CharField(max_length=100, verbose_name='上机条码号')
     bam_file = models.CharField(max_length=100, verbose_name='原始bam文件')
     barcode = models.CharField(max_length=100, blank=True, null=True, verbose_name='样本条码号')
+    is_control = models.BooleanField(default=False, verbose_name='是否为对照样本')
 
     def __str__(self):
         return self.name
@@ -52,8 +53,38 @@ class AnalysisInfo(models.Model):
         return self.sample.name
 
 
-class Coverage(models.Model):
-    chrom = models.TextField(max_length=20, verbose_name='染色体')
+class RawCoverage(models.Model):
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
+    chr1 = models.FloatField(verbose_name='Chr1 Raw Coverage(%)')
+    chr2 = models.FloatField(verbose_name='Chr2 Raw Coverage(%)')
+    chr3 = models.FloatField(verbose_name='Chr3 Raw Coverage(%)')
+    chr4 = models.FloatField(verbose_name='Chr4 Raw Coverage(%)')
+    chr5 = models.FloatField(verbose_name='Chr5 Raw Coverage(%)')
+    chr6 = models.FloatField(verbose_name='Chr6 Raw Coverage(%)')
+    chr7 = models.FloatField(verbose_name='Chr7 Raw Coverage(%)')
+    chr8 = models.FloatField(verbose_name='Chr8 Raw Coverage(%)')
+    chr9 = models.FloatField(verbose_name='Chr9 Raw Coverage(%)')
+    chr10 = models.FloatField(verbose_name='Chr10 Raw Coverage(%)')
+    chr11 = models.FloatField(verbose_name='Chr11 Raw Coverage(%)')
+    chr12 = models.FloatField(verbose_name='Chr12 Raw Coverage(%)')
+    chr13 = models.FloatField(verbose_name='Chr13 Raw Coverage(%)')
+    chr14 = models.FloatField(verbose_name='Chr14 Raw Coverage(%)')
+    chr15 = models.FloatField(verbose_name='Chr15 Raw Coverage(%)')
+    chr16 = models.FloatField(verbose_name='Chr16 Raw Coverage(%)')
+    chr17 = models.FloatField(verbose_name='Chr17 Raw Coverage(%)')
+    chr18 = models.FloatField(verbose_name='Chr18 Raw Coverage(%)')
+    chr19 = models.FloatField(verbose_name='Chr19 Raw Coverage(%)')
+    chr20 = models.FloatField(verbose_name='Chr20 Raw Coverage(%)')
+    chr21 = models.FloatField(verbose_name='Chr21 Raw Coverage(%)')
+    chr22 = models.FloatField(verbose_name='Chr22 Raw Coverage(%)')
+    chrX = models.FloatField(verbose_name='ChrX Raw Coverage(%)')
+    chrY = models.FloatField(verbose_name='ChrY Raw Coverage(%)')
+
+    def __str__(self):
+        return f'Raw Coverage of {self.sample.name}'
+
+
+class FitCoverage(models.Model):
     sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Coverage(%)')
     chr2 = models.FloatField(verbose_name='Chr2 Coverage(%)')
@@ -85,7 +116,6 @@ class Coverage(models.Model):
 
 
 class Epsilon(models.Model):
-    chrom = models.TextField(max_length=20, verbose_name='染色体')
     sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Epsilon')
     chr2 = models.FloatField(verbose_name='Chr2 Epsilon')
@@ -117,7 +147,6 @@ class Epsilon(models.Model):
 
 
 class ZScore(models.Model):
-    chrom = models.TextField(max_length=20, verbose_name='染色体')
     sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Z-Score')
     chr2 = models.FloatField(verbose_name='Chr2 Z-Score')

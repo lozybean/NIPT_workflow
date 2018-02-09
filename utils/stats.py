@@ -23,9 +23,15 @@ def get_stats(file_name):
         for line in fp:
             if not line.startswith('#'):
                 break
-            key, value = line.strip().split('\t')
+            key, value = line.lstrip('#').strip().split('\t')
             rt_dict[key] = float(value)
     return rt_dict
+
+
+def get_one_ratio(ratio_file):
+    reads_ratio = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
+    reads_ratio = {chrom: reads_ratio[chrom].values[0] for chrom in reads_ratio}
+    return reads_ratio
 
 
 def get_ratio_dict(ratio_dir, min_usable_reads=3000000, aneuploid_samples=None):
@@ -41,9 +47,9 @@ def get_ratio_dict(ratio_dir, min_usable_reads=3000000, aneuploid_samples=None):
             continue
         samples.append(sample_name)
         gc_contents.append(stats['gc_content'])
-        reads_ratio = pd.read_csv(file, sep='\t', comment='#', header=0, index_col=0).T
+        reads_ratio = get_one_ratio(file)
         for chrom in reads_ratio:
-            ratio_dict[chrom].append(reads_ratio[chrom].values[0])
+            ratio_dict[chrom].append(reads_ratio[chrom])
     for chrom in ratio_dict:
         ratio_dict[chrom] = np.array(ratio_dict[chrom])
     return ratio_dict, gc_contents, samples
