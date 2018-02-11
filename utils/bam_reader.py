@@ -51,17 +51,22 @@ def stat_bam_file(bam_file, accept_bins,
     gc_bases = 0
     total_reads = 0
     total_bases = 0
+    gc_dict = defaultdict(int)
+    base_dict = defaultdict(int)
     for record in bam_file:
         if reads_filter(record, min_mq):
             continue
         bin_key = falling_within_bin(record, bin_size)
         if bin_key in accept_bins:
             total_reads += 1
-            gc_bases += record.seq.count('G')
-            gc_bases += record.seq.count('C')
+            gc_base = record.seq.count('G') + record.seq.count('C')
+            gc_bases += gc_base
             total_bases += len(record.seq)
+            gc_dict[record.reference_name] += gc_base
+            base_dict[record.reference_name] += len(record.seq)
 
     return {
+        'gc_per_chrom': {chrom: gc_dict[chrom] / base_dict[chrom] for chrom in gc_dict},
         'gc_content': gc_bases / total_bases,
         'total_bases': total_bases,
         'usable_reads': total_reads,

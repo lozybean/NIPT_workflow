@@ -78,7 +78,8 @@ def fitting_all_ratio():
     gc_content_list = []
     sample_list = []
     for sample in Sample.objects.filter(is_control=False, analysisinfo__aneuploid=False,
-                                        analysisinfo__usable_reads__gt=3000000):
+                                        analysisinfo__usable_reads__gt=3000000,
+                                        is_abnormal=False):
         sample_list.append(sample)
         gc_content_list.append(sample.analysisinfo.gc_content)
         for chrom in chrom_list:

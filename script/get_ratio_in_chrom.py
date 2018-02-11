@@ -66,9 +66,9 @@ class Work(object):
             print("#gc_content", self.stats['gc_content'] * 100, sep='\t', file=fp)
             print('#total_bases', self.stats['total_bases'], sep='\t', file=fp)
             print('#usable_reads', self.stats['usable_reads'], sep='\t', file=fp)
-            print('chrom', 'reads_ratio', sep='\t', file=fp)
+            print('chrom', 'reads_ratio', 'gc_content', sep='\t', file=fp)
             for chrom, ratio in ratio_in_chrom.items():
-                print(chrom, ratio, sep='\t', file=fp)
+                print(chrom, ratio, self.stats['gc_per_chrom'].get(chrom, 0), sep='\t', file=fp)
 
 
 if __name__ == '__main__':

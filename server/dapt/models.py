@@ -16,9 +16,10 @@ class Sample(models.Model):
     run = models.ForeignKey(Run, verbose_name='Pool', null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=100, verbose_name='样本编号')
     seq_barcode = models.CharField(max_length=100, verbose_name='上机条码号')
-    bam_file = models.CharField(max_length=100, verbose_name='原始bam文件')
+    bam_file = models.CharField(max_length=500, verbose_name='原始bam文件')
     barcode = models.CharField(max_length=100, blank=True, null=True, verbose_name='样本条码号')
     is_control = models.BooleanField(default=False, verbose_name='是否为对照样本')
+    is_abnormal = models.BooleanField(default=False, verbose_name='异常样本')
 
     def __str__(self):
         return self.name
@@ -51,6 +52,37 @@ class AnalysisInfo(models.Model):
 
     def __str__(self):
         return self.sample.name
+
+
+class GCContent(models.Model):
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
+    chr1 = models.FloatField(verbose_name='Chr1 gc content(%)')
+    chr2 = models.FloatField(verbose_name='Chr2 gc content(%)')
+    chr3 = models.FloatField(verbose_name='Chr3 gc content(%)')
+    chr4 = models.FloatField(verbose_name='Chr4 gc content(%)')
+    chr5 = models.FloatField(verbose_name='Chr5 gc content(%)')
+    chr6 = models.FloatField(verbose_name='Chr6 gc content(%)')
+    chr7 = models.FloatField(verbose_name='Chr7 gc content(%)')
+    chr8 = models.FloatField(verbose_name='Chr8 gc content(%)')
+    chr9 = models.FloatField(verbose_name='Chr9 gc content(%)')
+    chr10 = models.FloatField(verbose_name='Chr10 gc content(%)')
+    chr11 = models.FloatField(verbose_name='Chr11 gc content(%)')
+    chr12 = models.FloatField(verbose_name='Chr12 gc content(%)')
+    chr13 = models.FloatField(verbose_name='Chr13 gc content(%)')
+    chr14 = models.FloatField(verbose_name='Chr14 gc content(%)')
+    chr15 = models.FloatField(verbose_name='Chr15 gc content(%)')
+    chr16 = models.FloatField(verbose_name='Chr16 gc content(%)')
+    chr17 = models.FloatField(verbose_name='Chr17 gc content(%)')
+    chr18 = models.FloatField(verbose_name='Chr18 gc content(%)')
+    chr19 = models.FloatField(verbose_name='Chr19 gc content(%)')
+    chr20 = models.FloatField(verbose_name='Chr20 gc content(%)')
+    chr21 = models.FloatField(verbose_name='Chr21 gc content(%)')
+    chr22 = models.FloatField(verbose_name='Chr22 gc content(%)')
+    chrX = models.FloatField(verbose_name='ChrX gc content(%)')
+    chrY = models.FloatField(verbose_name='ChrY gc content(%)')
+
+    def __str__(self):
+        return f'gc content of {self.sample.name}'
 
 
 class RawCoverage(models.Model):
