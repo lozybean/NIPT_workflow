@@ -7,14 +7,14 @@ import django
 import numpy as np
 from NIPT_workflow.utils.bam_reader import read_bin_counts, get_ratio_in_chrom, stat_bam_file
 from NIPT_workflow.utils.gc_correction import read_gc_percent_file
-from NIPT_workflow.utils.stats import get_one_ratio, get_stats
+from NIPT_workflow.utils.stats import get_one_ratio, get_stats, get_one_gc
 from path import Path, getcwdu
 
 sys.path.append(f'{Path(__file__).parent}/../server')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django.setup()
 
-from dapt.models import Sample, AnalysisInfo, RawCoverage, FitCoverage
+from dapt.models import Sample, AnalysisInfo, RawCoverage, FitCoverage, GCContent, FitCoverage2
 
 re_id = re.compile('ID_(\d+)')
 gc20kBase = '/bio01/database/genome/hg19/primary23/hg19.gc20kBase.txt'
@@ -57,6 +57,16 @@ def read_ratio(sample, ratio_file):
     sample.rawcoverage.save()
 
 
+def read_gc(sample, ratio_file):
+    gc_dict = get_one_gc(ratio_file)
+    gc_content = getattr(sample, 'gccontent', GCContent())
+    for chrom in chrom_list:
+        value = gc_dict.get(chrom, 0)
+        setattr(gc_content, chrom, value)
+    sample.gccontent = gc_content
+    sample.gccontent.save()
+
+
 def read_stat(sample, ratio_file):
     analysis_info = getattr(sample, 'analysisinfo', AnalysisInfo())
     stat = get_stats(ratio_file)
@@ -70,6 +80,7 @@ def read_all_ratio(ratio_dir):
     for file in Path(ratio_dir).files('*.ratio.txt'):
         sample = get_sample(file)
         read_ratio(sample, file)
+        read_gc(sample, file)
         read_stat(sample, file)
 
 
@@ -98,7 +109,34 @@ def fitting_all_ratio():
         sample.fitcoverage.save()
 
 
+def fitting_all_ratio2():
+    ratio_dict = defaultdict(list)
+    gc_dict = defaultdict(list)
+    sample_list = []
+    for sample in Sample.objects.filter(is_control=False, analysisinfo__aneuploid=False,
+                                        analysisinfo__usable_reads__gt=3000000,
+                                        is_abnormal=False):
+        sample_list.append(sample)
+        for chrom in chrom_list:
+            ratio_dict[chrom].append(getattr(sample.rawcoverage, chrom))
+        for chrom in chrom_list:
+            gc_dict[chrom].append(getattr(sample.gccontent, chrom))
+    fit_ratio = {}
+    for chrom in ratio_dict:
+        coefficient = np.polyfit(gc_dict[chrom], ratio_dict[chrom], 1)
+        fit_ratio[chrom] = np.array([coefficient[0] * gc_dict[chrom][i] + coefficient[1]
+                                     for i in range(len(gc_dict[chrom]))])
+    for ind, sample in enumerate(sample_list):
+        ratio = {chrom: fit_ratio[chrom][ind] for chrom in chrom_list}
+        coverage = getattr(sample, 'fitcoverage2', FitCoverage2())
+        for chrom in ratio:
+            setattr(coverage, chrom, ratio[chrom])
+        sample.fitcoverage2 = coverage
+        sample.fitcoverage2.save()
+
+
 if __name__ == '__main__':
     ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio').abspath()
     read_all_ratio(ratio_dir)
     fitting_all_ratio()
+    fitting_all_ratio2()

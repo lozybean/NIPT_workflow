@@ -66,7 +66,7 @@ def stat_bam_file(bam_file, accept_bins,
             base_dict[record.reference_name] += len(record.seq)
 
     return {
-        'gc_per_chrom': {chrom: gc_dict[chrom] / base_dict[chrom] for chrom in gc_dict},
+        'gc_per_chrom': {chrom: gc_dict[chrom] / base_dict[chrom] * 100 for chrom in gc_dict},
         'gc_content': gc_bases / total_bases,
         'total_bases': total_bases,
         'usable_reads': total_reads,

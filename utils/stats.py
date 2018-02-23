@@ -30,8 +30,14 @@ def get_stats(file_name):
 
 def get_one_ratio(ratio_file):
     reads_ratio = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
-    reads_ratio = {chrom: reads_ratio[chrom].values[0] for chrom in reads_ratio}
+    reads_ratio = {chrom: reads_ratio[chrom]['reads_ratio'] for chrom in reads_ratio}
     return reads_ratio
+
+
+def get_one_gc(ratio_file):
+    gc_content = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
+    gc_content = {chrom: gc_content[chrom]['gc_content'] for chrom in gc_content}
+    return gc_content
 
 
 def get_ratio_dict(ratio_dir, min_usable_reads=3000000, aneuploid_samples=None):

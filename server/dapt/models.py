@@ -147,6 +147,40 @@ class FitCoverage(models.Model):
         return f'Coverage of {self.sample.name}'
 
 
+class FitCoverage2(models.Model):
+    """
+    fit coverage with gc contents for every chromosome
+    """
+    sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
+    chr1 = models.FloatField(verbose_name='Chr1 Coverage(%)')
+    chr2 = models.FloatField(verbose_name='Chr2 Coverage(%)')
+    chr3 = models.FloatField(verbose_name='Chr3 Coverage(%)')
+    chr4 = models.FloatField(verbose_name='Chr4 Coverage(%)')
+    chr5 = models.FloatField(verbose_name='Chr5 Coverage(%)')
+    chr6 = models.FloatField(verbose_name='Chr6 Coverage(%)')
+    chr7 = models.FloatField(verbose_name='Chr7 Coverage(%)')
+    chr8 = models.FloatField(verbose_name='Chr8 Coverage(%)')
+    chr9 = models.FloatField(verbose_name='Chr9 Coverage(%)')
+    chr10 = models.FloatField(verbose_name='Chr10 Coverage(%)')
+    chr11 = models.FloatField(verbose_name='Chr11 Coverage(%)')
+    chr12 = models.FloatField(verbose_name='Chr12 Coverage(%)')
+    chr13 = models.FloatField(verbose_name='Chr13 Coverage(%)')
+    chr14 = models.FloatField(verbose_name='Chr14 Coverage(%)')
+    chr15 = models.FloatField(verbose_name='Chr15 Coverage(%)')
+    chr16 = models.FloatField(verbose_name='Chr16 Coverage(%)')
+    chr17 = models.FloatField(verbose_name='Chr17 Coverage(%)')
+    chr18 = models.FloatField(verbose_name='Chr18 Coverage(%)')
+    chr19 = models.FloatField(verbose_name='Chr19 Coverage(%)')
+    chr20 = models.FloatField(verbose_name='Chr20 Coverage(%)')
+    chr21 = models.FloatField(verbose_name='Chr21 Coverage(%)')
+    chr22 = models.FloatField(verbose_name='Chr22 Coverage(%)')
+    chrX = models.FloatField(verbose_name='ChrX Coverage(%)')
+    chrY = models.FloatField(verbose_name='ChrY Coverage(%)')
+
+    def __str__(self):
+        return f'Coverage of {self.sample.name}'
+
+
 class Epsilon(models.Model):
     sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
     chr1 = models.FloatField(verbose_name='Chr1 Epsilon')
