@@ -56,9 +56,9 @@ class Work(object):
                             metavar='INT', type=int, default=30,
                             help="minimum mapping quality")
         parser.add_argument('-o', '--over_abundant', dest='over_abundant',
-                            metavar='INT', type=int, default=3,
+                            metavar='INT', type=int, default=2,
                             help="how many times of average depth will be recognized as "
-                                 "\"OVER ABUNDANT\", [default is 3]")
+                                 "\"OVER ABUNDANT\", [default is 2]")
         parser.add_argument('--plot_bin_count', dest='plot_bin_count',
                             metavar='FILE', type=str, default=None,
                             help="plot bin count before and after gc correction")

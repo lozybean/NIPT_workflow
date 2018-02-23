@@ -72,12 +72,12 @@ def ratio_fitting(ratio_dict, gc_contents):
     return fit_ratio
 
 
-def get_epsilon(ratio_dict, fit_dict):
-    epsilon = {}
+def get_residuals(ratio_dict, fit_dict):
+    residuals = {}
     for chrom in ratio_dict:
-        epsilon[chrom] = ratio_dict[chrom] - fit_dict[chrom]
-    return epsilon
+        residuals[chrom] = ratio_dict[chrom] - fit_dict[chrom]
+    return residuals
 
 
-def get_z_score(e, epsilon):
-    return (e - np.mean(epsilon)) / np.std(epsilon)
+def get_z_score(e, residuals):
+    return (e - np.mean(residuals)) / np.std(residuals)

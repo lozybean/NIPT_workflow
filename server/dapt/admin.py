@@ -1,4 +1,4 @@
-from dapt.models import Run, Sample, ClinicalInfo, RawCoverage, Epsilon, ZScore, AnalysisInfo
+from dapt.models import Run, Sample, ClinicalInfo, RawCoverage, Residuals, ZScore, AnalysisInfo
 from django.contrib import admin
 
 
@@ -17,5 +17,5 @@ admin.site.register(Sample, SampleAdmin)
 admin.site.register(AnalysisInfo, AnalysisInfoAdmin)
 admin.site.register(ClinicalInfo)
 admin.site.register(RawCoverage, AnalysisInfoAdmin)
-admin.site.register(Epsilon)
+admin.site.register(Residuals)
 admin.site.register(ZScore)

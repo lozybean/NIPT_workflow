@@ -181,35 +181,35 @@ class FitCoverage2(models.Model):
         return f'Coverage of {self.sample.name}'
 
 
-class Epsilon(models.Model):
+class Residuals(models.Model):
     sample = models.OneToOneField(Sample, verbose_name='样本', on_delete=models.CASCADE)
-    chr1 = models.FloatField(verbose_name='Chr1 Epsilon')
-    chr2 = models.FloatField(verbose_name='Chr2 Epsilon')
-    chr3 = models.FloatField(verbose_name='Chr3 Epsilon')
-    chr4 = models.FloatField(verbose_name='Chr4 Epsilon')
-    chr5 = models.FloatField(verbose_name='Chr5 Epsilon')
-    chr6 = models.FloatField(verbose_name='Chr6 Epsilon')
-    chr7 = models.FloatField(verbose_name='Chr7 Epsilon')
-    chr8 = models.FloatField(verbose_name='Chr8 Epsilon')
-    chr9 = models.FloatField(verbose_name='Chr9 Epsilon')
-    chr10 = models.FloatField(verbose_name='Chr10 Epsilon')
-    chr11 = models.FloatField(verbose_name='Chr11 Epsilon')
-    chr12 = models.FloatField(verbose_name='Chr12 Epsilon')
-    chr13 = models.FloatField(verbose_name='Chr13 Epsilon')
-    chr14 = models.FloatField(verbose_name='Chr14 Epsilon')
-    chr15 = models.FloatField(verbose_name='Chr15 Epsilon')
-    chr16 = models.FloatField(verbose_name='Chr16 Epsilon')
-    chr17 = models.FloatField(verbose_name='Chr17 Epsilon')
-    chr18 = models.FloatField(verbose_name='Chr18 Epsilon')
-    chr19 = models.FloatField(verbose_name='Chr19 Epsilon')
-    chr20 = models.FloatField(verbose_name='Chr20 Epsilon')
-    chr21 = models.FloatField(verbose_name='Chr21 Epsilon')
-    chr22 = models.FloatField(verbose_name='Chr22 Epsilon')
-    chrX = models.FloatField(verbose_name='ChrX Epsilon')
-    chrY = models.FloatField(verbose_name='ChrY Epsilon')
+    chr1 = models.FloatField(verbose_name='Chr1 Residuals')
+    chr2 = models.FloatField(verbose_name='Chr2 Residuals')
+    chr3 = models.FloatField(verbose_name='Chr3 Residuals')
+    chr4 = models.FloatField(verbose_name='Chr4 Residuals')
+    chr5 = models.FloatField(verbose_name='Chr5 Residuals')
+    chr6 = models.FloatField(verbose_name='Chr6 Residuals')
+    chr7 = models.FloatField(verbose_name='Chr7 Residuals')
+    chr8 = models.FloatField(verbose_name='Chr8 Residuals')
+    chr9 = models.FloatField(verbose_name='Chr9 Residuals')
+    chr10 = models.FloatField(verbose_name='Chr10 Residuals')
+    chr11 = models.FloatField(verbose_name='Chr11 Residuals')
+    chr12 = models.FloatField(verbose_name='Chr12 Residuals')
+    chr13 = models.FloatField(verbose_name='Chr13 Residuals')
+    chr14 = models.FloatField(verbose_name='Chr14 Residuals')
+    chr15 = models.FloatField(verbose_name='Chr15 Residuals')
+    chr16 = models.FloatField(verbose_name='Chr16 Residuals')
+    chr17 = models.FloatField(verbose_name='Chr17 Residuals')
+    chr18 = models.FloatField(verbose_name='Chr18 Residuals')
+    chr19 = models.FloatField(verbose_name='Chr19 Residuals')
+    chr20 = models.FloatField(verbose_name='Chr20 Residuals')
+    chr21 = models.FloatField(verbose_name='Chr21 Residuals')
+    chr22 = models.FloatField(verbose_name='Chr22 Residuals')
+    chrX = models.FloatField(verbose_name='ChrX Residuals')
+    chrY = models.FloatField(verbose_name='ChrY Residuals')
 
     def __str__(self):
-        return f'Epsilon of {self.sample.name}'
+        return f'Residuals of {self.sample.name}'
 
 
 class ZScore(models.Model):

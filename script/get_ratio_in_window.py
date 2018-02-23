@@ -9,7 +9,7 @@ import argparse
 from functools import lru_cache
 
 from NIPT_workflow.utils.bam_reader import (
-    read_bin_counts, get_ratio_in_chrom, stat_bam_file
+    read_bin_counts, stat_bam_file, get_ratio_in_window
 )
 from NIPT_workflow.utils.gc_correction import (
     read_gc_percent_file, gc_correct_lowess, gc_correct_bin_counts
@@ -31,7 +31,9 @@ class Work(object):
         self.bin_counts = gc_correct_lowess(self.gc2bin, gc_correct_depth)
         self.stats = stat_bam_file(self.args.bam_in, self.bin_counts,
                                    bin_size=self.args.bin_size,
-                                   min_mq=self.args.min_mq)
+                                   min_mq=self.args.min_mq,
+                                   by_window=True,
+                                   window_size=self.args.window_size)
 
     @property
     @lru_cache(1)
@@ -49,7 +51,13 @@ class Work(object):
         parser.add_argument('-b', '--bin_size', dest='bin_size',
                             metavar='INT', type=int, default=20000,
                             help="bin size, [default is 20000]")
-        parser.add_argument('-m', '--min_mq', dest='min_mq',
+        parser.add_argument('-w', '--window_size', dest='window_size',
+                            metavar='INT', type=int, default=1000000,
+                            help="window size, [default is 1000000]")
+        parser.add_argument('-m', '--min_reads_per_window', dest='min_reads_per_window',
+                            metavar='INT', type=int, default=0,
+                            help="minimum reads per window")
+        parser.add_argument('--min_mq', dest='min_mq',
                             metavar='INT', type=int, default=30,
                             help="minimum mapping quality")
         parser.add_argument('--over_abundant', dest='over_abundant',
@@ -63,14 +71,17 @@ class Work(object):
         return args
 
     def __call__(self, *args, **kwargs):
-        ratio_in_chrom = get_ratio_in_chrom(self.bin_counts)
+        ratio_in_window = get_ratio_in_window(self.bin_counts, self.args.window_size)
         with open(self.args.output, 'w') as fp:
             print("#gc_content", self.stats['gc_content'] * 100, sep='\t', file=fp)
             print('#total_bases', self.stats['total_bases'], sep='\t', file=fp)
             print('#usable_reads', self.stats['usable_reads'], sep='\t', file=fp)
-            print('chrom', 'reads_ratio', 'gc_content', sep='\t', file=fp)
-            for chrom, ratio in ratio_in_chrom.items():
-                print(chrom, ratio, self.stats['gc_per_chrom'].get(chrom, 0), sep='\t', file=fp)
+            print('window', 'reads_ratio', 'gc_content', sep='\t', file=fp)
+            for chrom in sorted(ratio_in_window.keys()):
+                for window in sorted(ratio_in_window[chrom].keys()):
+                    print(chrom, window, ratio_in_window[chrom][window],
+                          self.stats['gc_per_chrom'].get(chrom, {}).get(window, 0),
+                          sep='\t', file=fp)
 
 
 if __name__ == '__main__':

@@ -11,6 +11,7 @@ from collections import defaultdict
 import numpy as np
 from Bio.Statistics.lowess import lowess
 
+np.seterr(all='raise')
 re_variable = re.compile('variableStep chrom=(\w+) span=(\d+)')
 
 
@@ -56,14 +57,18 @@ def gc_correct_lowess(gc2bin, raw_counts):
     rt_dict = {}
     for gc_content, bin_list in gc2bin.items():
         value_list = np.array([raw_counts[b] for b in bin_list])
-        if len(value_list) < 3:
+        if len(value_list) <= 3:
             cor_value_list = value_list
         else:
             average_depth = average_depth_in_gc(gc2bin, raw_counts, gc_content)
             # key_list, value_list = zip(*sorted(bin_counts.items()))
             x = np.array(range(len(bin_list)))
-            ur_loess = lowess(x, value_list)
-            cor_value_list = value_list - (ur_loess - average_depth)
+            try:
+                ur_loess = lowess(x, value_list)
+                cor_value_list = value_list - (ur_loess - average_depth)
+            except FloatingPointError:
+                cor_value_list = value_list
+                pass
         for b, v in zip(bin_list, cor_value_list):
             rt_dict[b] = v
     return rt_dict

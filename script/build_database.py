@@ -11,7 +11,7 @@ from functools import lru_cache
 
 import matplotlib as mpl
 from NIPT_workflow.utils.stats import (
-    get_ratio_dict, ratio_fitting, get_epsilon
+    get_ratio_dict, ratio_fitting, get_residuals
 )
 
 mpl.use('Agg')
@@ -25,7 +25,7 @@ class Work(object):
                                                                          self.args.min_usable_reads,
                                                                          self.args.aneuploid_samples)
         self.fitting_dict = ratio_fitting(self.ratio_dict, self.gc_contents)
-        self.epsilon = get_epsilon(self.ratio_dict, self.gc_contents)
+        self.residuals = get_residuals(self.ratio_dict, self.gc_contents)
 
     @property
     @lru_cache(1)
@@ -71,11 +71,11 @@ class Work(object):
     def plot_all_reads_ratio(self):
         self.plot_all_scatter(self.ratio_dict)
 
-    def plot_all_epsilon(self):
-        self.plot_all_scatter(self.epsilon)
+    def plot_all_residuals(self):
+        self.plot_all_scatter(self.residuals)
 
     def plot_reads_ratio(self, chrom):
         self.plot_single_scatter(self.ratio_dict, chrom, ylabel='reads ratio among samples')
 
-    def plot_epsilon_ratio(self, chrom):
-        self.plot_single_scatter(self.epsilon, chrom, ylabel='epsilon among samples')
+    def plot_residuals_ratio(self, chrom):
+        self.plot_single_scatter(self.residuals, chrom, ylabel='residuals among samples')
