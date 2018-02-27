@@ -14,7 +14,7 @@ sys.path.append(f'{Path(__file__).parent}/../server')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django.setup()
 
-from dapt.models import Sample, AnalysisInfo, RawCoverage, FitCoverage, GCContent, FitCoverage2
+from dapt.models import Sample, AnalysisInfo, RawCoverage, GCContent, FitCoverage, FitCoverage2
 
 re_id = re.compile('ID_(\d+)')
 gc20kBase = '/bio01/database/genome/hg19/primary23/hg19.gc20kBase.txt'
@@ -95,16 +95,17 @@ def fitting_all_ratio():
         gc_content_list.append(sample.analysisinfo.gc_content)
         for chrom in chrom_list:
             ratio_dict[chrom].append(getattr(sample.rawcoverage, chrom))
-    fit_ratio = {}
+    coefficient_dict = {}
     for chrom in ratio_dict:
-        coefficient = np.polyfit(gc_content_list, ratio_dict[chrom], 1)
-        fit_ratio[chrom] = np.array([coefficient[0] * gc_content_list[i] + coefficient[1]
-                                     for i in range(len(gc_content_list))])
-    for ind, sample in enumerate(sample_list):
-        ratio = {chrom: fit_ratio[chrom][ind] for chrom in chrom_list}
+        coefficient_dict[chrom] = np.polyfit(gc_content_list, ratio_dict[chrom], 1)
+    for sample in Sample.objects.all():
+        fit_ratio = {}
+        for chrom in chrom_list:
+            sample_gc_chrom = sample.analysisinfo.gc_content
+            fit_ratio[chrom] = coefficient_dict[chrom][0] * sample_gc_chrom + coefficient_dict[chrom][1]
         coverage = getattr(sample, 'fitcoverage', FitCoverage())
-        for chrom in ratio:
-            setattr(coverage, chrom, ratio[chrom])
+        for chrom in fit_ratio:
+            setattr(coverage, chrom, fit_ratio[chrom])
         sample.fitcoverage = coverage
         sample.fitcoverage.save()
 
@@ -121,16 +122,17 @@ def fitting_all_ratio2():
             ratio_dict[chrom].append(getattr(sample.rawcoverage, chrom))
         for chrom in chrom_list:
             gc_dict[chrom].append(getattr(sample.gccontent, chrom))
-    fit_ratio = {}
+    coefficient_dict = {}
     for chrom in ratio_dict:
-        coefficient = np.polyfit(gc_dict[chrom], ratio_dict[chrom], 1)
-        fit_ratio[chrom] = np.array([coefficient[0] * gc_dict[chrom][i] + coefficient[1]
-                                     for i in range(len(gc_dict[chrom]))])
-    for ind, sample in enumerate(sample_list):
-        ratio = {chrom: fit_ratio[chrom][ind] for chrom in chrom_list}
+        coefficient_dict[chrom] = np.polyfit(gc_dict[chrom], ratio_dict[chrom], 1)
+    for sample in Sample.objects.all():
+        fit_ratio = {}
+        for chrom in chrom_list:
+            sample_gc_chrom = getattr(sample.gccontent, chrom)
+            fit_ratio[chrom] = coefficient_dict[chrom][0] * sample_gc_chrom + coefficient_dict[chrom][1]
         coverage = getattr(sample, 'fitcoverage2', FitCoverage2())
-        for chrom in ratio:
-            setattr(coverage, chrom, ratio[chrom])
+        for chrom in fit_ratio:
+            setattr(coverage, chrom, fit_ratio[chrom])
         sample.fitcoverage2 = coverage
         sample.fitcoverage2.save()
 

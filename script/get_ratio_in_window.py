@@ -73,14 +73,14 @@ class Work(object):
     def __call__(self, *args, **kwargs):
         ratio_in_window = get_ratio_in_window(self.bin_counts, self.args.window_size)
         with open(self.args.output, 'w') as fp:
-            print("#gc_content", self.stats['gc_content'] * 100, sep='\t', file=fp)
+            print("#gc_content", self.stats['gc_content'] * 10000, sep='\t', file=fp)
             print('#total_bases', self.stats['total_bases'], sep='\t', file=fp)
             print('#usable_reads', self.stats['usable_reads'], sep='\t', file=fp)
-            print('window', 'reads_ratio', 'gc_content', sep='\t', file=fp)
+            print('chrom', 'window', 'reads_ratio', 'gc_content', sep='\t', file=fp)
             for chrom in sorted(ratio_in_window.keys()):
                 for window in sorted(ratio_in_window[chrom].keys()):
                     print(chrom, window, ratio_in_window[chrom][window],
-                          self.stats['gc_per_chrom'].get(chrom, {}).get(window, 0),
+                          self.stats['gc_per_window'].get(chrom, {}).get(window, 0),
                           sep='\t', file=fp)
 
 

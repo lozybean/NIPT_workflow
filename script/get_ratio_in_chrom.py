@@ -27,8 +27,9 @@ class Work(object):
             min_mq=self.args.min_mq,
             over_abundant=self.args.over_abundant,
         )
-        gc_correct_depth = gc_correct_bin_counts(self.gc2bin, self.bin_counts)
-        self.bin_counts = gc_correct_lowess(self.gc2bin, gc_correct_depth)
+        if not self.args.without_gc_correct:
+            gc_correct_depth = gc_correct_bin_counts(self.gc2bin, self.bin_counts)
+            self.bin_counts = gc_correct_lowess(self.gc2bin, gc_correct_depth)
         self.stats = stat_bam_file(self.args.bam_in, self.bin_counts,
                                    bin_size=self.args.bin_size,
                                    min_mq=self.args.min_mq)
@@ -59,6 +60,9 @@ class Work(object):
         parser.add_argument('-o', '--output', dest='output',
                             metavar='FILE', type=str, required=True,
                             help="output file")
+        parser.add_argument('--without_gc_correct', default=False,
+                            action='store_true',
+                            help="stat reads ratio without gc correct")
         args = parser.parse_args()
         return args
 

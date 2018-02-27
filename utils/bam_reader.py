@@ -112,10 +112,8 @@ def get_reads_in_window(bin_counts, bin_size):
 
 def get_ratio_in_chrom(bin_counts):
     reads_in_chrom = get_reads_in_chrom(bin_counts)
-    print(reads_in_chrom)
     rt_dict = {}
     total_reads = sum(reads_in_chrom.values())
-    print(total_reads)
     for chrom, reads_count in reads_in_chrom.items():
         rt_dict[chrom] = reads_in_chrom[chrom] / total_reads * 100
     return rt_dict
@@ -124,11 +122,25 @@ def get_ratio_in_chrom(bin_counts):
 def get_ratio_in_window(bin_counts, bin_size, min_reads_in_bins=0):
     reads_in_bins = get_reads_in_window(bin_counts, bin_size)
     rt_dict = defaultdict(dict)
-    total_reads = sum(v for v in reads_in_bins.values() if v > min_reads_in_bins)
+    total_reads = sum(v for reads_in_chrom in reads_in_bins.values()
+                      for v in reads_in_chrom.values() if v > min_reads_in_bins)
     for chrom, bins in reads_in_bins.items():
         for b in bins:
             if reads_in_bins[chrom][b] > min_reads_in_bins:
                 rt_dict[chrom][b] = reads_in_bins[chrom][b] / total_reads * 100
             else:
                 rt_dict[chrom][b] = 0
+    return rt_dict
+
+
+def read_length_distribution(bam_file, min_mq=15):
+    rt_dict = defaultdict(int)
+    bam_file = pysam.AlignmentFile(bam_file)
+    for record in bam_file:
+        if reads_filter(record, min_mq):
+            continue
+        length = len(record.seq)
+        # start = length // interval * interval + 1
+        # end = length // interval * interval + interval
+        rt_dict[length] += 1
     return rt_dict
