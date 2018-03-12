@@ -14,13 +14,12 @@ sys.path.append(f'{Path(__file__).parent}/../server')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django.setup()
 
-from dapt.models import Sample, AnalysisInfo, RawCoverage, GCContent, FitCoverage, FitCoverage2
+from dapt.models import Sample, AnalysisInfo, RawCoverage, RawCoverage2, GCContent, FitCoverage, FitCoverage2
 
 re_id = re.compile('ID_(\d+)')
 gc20kBase = '/bio01/database/genome/hg19/primary23/hg19.gc20kBase.txt'
-chrom_list = [f'chr{i}' for i in range(1, 23)]
-chrom_list.append('chrX')
-chrom_list.append('chrY')
+chrom_normal = [f'chr{i}' for i in range(1, 23)]
+chrom_list = chrom_normal + ['chrX', 'chrY']
 
 
 def get_coverage(sample, bam_file):
@@ -57,6 +56,16 @@ def read_ratio(sample, ratio_file):
     sample.rawcoverage.save()
 
 
+def read_ratio2(sample, ratio_file):
+    ratio_dict = get_one_ratio(ratio_file)
+    coverage = getattr(sample, 'rawcoverage2', RawCoverage2())
+    for chrom in chrom_list:
+        value = ratio_dict.get(chrom, 0)
+        setattr(coverage, chrom, value)
+    sample.rawcoverage2 = coverage
+    sample.rawcoverage2.save()
+
+
 def read_gc(sample, ratio_file):
     gc_dict = get_one_gc(ratio_file)
     gc_content = getattr(sample, 'gccontent', GCContent())
@@ -82,6 +91,12 @@ def read_all_ratio(ratio_dir):
         read_ratio(sample, file)
         read_gc(sample, file)
         read_stat(sample, file)
+
+
+def read_all_ratio2(ratio_dir):
+    for file in Path(ratio_dir).files('*.ratio.txt'):
+        sample = get_sample(file)
+        read_ratio2(sample, file)
 
 
 def fitting_all_ratio():
@@ -138,7 +153,9 @@ def fitting_all_ratio2():
 
 
 if __name__ == '__main__':
-    ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio').abspath()
-    read_all_ratio(ratio_dir)
-    fitting_all_ratio()
-    fitting_all_ratio2()
+    # ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio').abspath()
+    # read_all_ratio(ratio_dir)
+    # fitting_all_ratio()
+    # fitting_all_ratio2()
+    ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio_without_gc_correct').abspath()
+    read_all_ratio2(ratio_dir)

@@ -9,7 +9,7 @@ import argparse
 from functools import lru_cache
 
 from NIPT_workflow.utils.bam_reader import (
-    read_bin_counts, get_ratio_in_chrom, stat_bam_file
+    read_bin_counts, stat_bam_file, get_reads_in_chrom
 )
 from NIPT_workflow.utils.gc_correction import (
     read_gc_percent_file, gc_correct_lowess, gc_correct_bin_counts
@@ -67,12 +67,12 @@ class Work(object):
         return args
 
     def __call__(self, *args, **kwargs):
-        ratio_in_chrom = get_ratio_in_chrom(self.bin_counts)
+        ratio_in_chrom = get_reads_in_chrom(self.bin_counts)
         with open(self.args.output, 'w') as fp:
             print("#gc_content", self.stats['gc_content'] * 100, sep='\t', file=fp)
             print('#total_bases', self.stats['total_bases'], sep='\t', file=fp)
             print('#usable_reads', self.stats['usable_reads'], sep='\t', file=fp)
-            print('chrom', 'reads_ratio', 'gc_content', sep='\t', file=fp)
+            print('chrom', 'reads_number', 'gc_content', sep='\t', file=fp)
             for chrom, ratio in ratio_in_chrom.items():
                 print(chrom, ratio, self.stats['gc_per_chrom'].get(chrom, 0), sep='\t', file=fp)
 

@@ -38,7 +38,11 @@ def insert_a_sample(run, sample_name, infos):
     original_bam = Path(f"{run.home_dir}/basecaller_results/{infos['barcodes'][0]}_rawlib.basecaller.bam")
     if not original_bam.exists():
         return None
+    s = Sample.objects.filter(bam_file=original_bam).first()
+    if s is not None:
+        return s
     sample = Sample(name=sample_name, seq_barcode=barcode, run=run, bam_file=original_bam)
+    print(f'inserting {sample}...')
     sample.save()
     return sample
 
@@ -69,4 +73,4 @@ def insert_runs(base_dir):
 
 
 if __name__ == '__main__':
-    insert_runs('/mnt/rawdata/NIPT_backup/results/Home/')
+    insert_runs('/mnt/boao_results/analysis/output/Home')

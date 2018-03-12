@@ -12,6 +12,9 @@ import numpy as np
 import pandas as pd
 from path import Path
 
+chrom_normal = [f'chr{i}' for i in range(1, 23)]
+chrom_list = chrom_normal + ['chrX', 'chrY']
+
 
 def get_base_name(file_name):
     return file_name.namebase.split('.')[0]
@@ -31,6 +34,11 @@ def get_stats(file_name):
 def get_one_ratio(ratio_file):
     reads_ratio = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
     reads_ratio = {chrom: reads_ratio[chrom]['reads_ratio'] for chrom in reads_ratio}
+    # reads_number = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
+    # normal_sum = sum(reads_number[chrom] for chrom in chrom_normal)
+    # reads_ratio = {chrom: reads_number[chrom] / normal_sum for chrom in chrom_normal}
+    # reads_ratio['chrX'] = ""
+    # reads_ratio['chrY'] = ""
     return reads_ratio
 
 
