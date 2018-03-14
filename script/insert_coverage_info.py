@@ -153,9 +153,9 @@ def fitting_all_ratio2():
 
 
 if __name__ == '__main__':
-    # ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio').abspath()
-    # read_all_ratio(ratio_dir)
-    # fitting_all_ratio()
-    # fitting_all_ratio2()
-    ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio_without_gc_correct').abspath()
-    read_all_ratio2(ratio_dir)
+    ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio').abspath()
+    read_all_ratio(ratio_dir)
+    fitting_all_ratio()
+    fitting_all_ratio2()
+    # ratio_dir = Path(f'{getcwdu()}/../03_reads_ratio_without_gc_correct').abspath()
+    # read_all_ratio2(ratio_dir)

@@ -32,13 +32,19 @@ def get_stats(file_name):
 
 
 def get_one_ratio(ratio_file):
-    reads_ratio = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
-    reads_ratio = {chrom: reads_ratio[chrom]['reads_ratio'] for chrom in reads_ratio}
-    # reads_number = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
-    # normal_sum = sum(reads_number[chrom] for chrom in chrom_normal)
-    # reads_ratio = {chrom: reads_number[chrom] / normal_sum for chrom in chrom_normal}
-    # reads_ratio['chrX'] = ""
-    # reads_ratio['chrY'] = ""
+    # reads_ratio = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
+    # reads_ratio = {chrom: reads_ratio[chrom]['reads_ratio'] for chrom in reads_ratio}
+    reads_number = pd.read_csv(ratio_file, sep='\t', comment='#', header=0, index_col=0).T
+    reads_dict = {}
+    for chrom in chrom_normal:
+        if chrom not in reads_number:
+            reads_dict[chrom] = 0
+        else:
+            reads_dict[chrom] = reads_number[chrom]['reads_number']
+    normal_sum = sum(reads_dict[chrom] for chrom in chrom_normal)
+    reads_ratio = {chrom: reads_dict[chrom] / normal_sum * 100 for chrom in chrom_normal}
+    reads_ratio['chrX'] = 0
+    reads_ratio['chrY'] = 0
     return reads_ratio
 
 
