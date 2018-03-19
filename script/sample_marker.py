@@ -40,11 +40,11 @@ def mark_control_sample():
 
 def mark_aneuploid_sample():
     for sample in Sample.objects.all():
+        analysisinfo = getattr(sample, 'analysisinfo', AnalysisInfo())
+        sample.analysisinfo = analysisinfo
         if sample.name in aneuploid_samples:
-            analysisinfo = getattr(sample, 'analysisinfo', AnalysisInfo())
-            sample.analysisinfo = analysisinfo
             sample.analysisinfo.aneuploid = True
-            sample.analysisinfo.save()
+        sample.analysisinfo.save()
 
 
 if __name__ == '__main__':
