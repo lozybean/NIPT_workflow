@@ -8,7 +8,7 @@ sys.path.append(f'{Path(__file__).parent}/../server')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django.setup()
 
-from dapt.models import Sample
+from dapt.models import Sample, AnalysisInfo
 
 aneuploid_samples = [
     "yang",
@@ -41,6 +41,8 @@ def mark_control_sample():
 def mark_aneuploid_sample():
     for sample in Sample.objects.all():
         if sample.name in aneuploid_samples:
+            analysisinfo = getattr(sample, 'analysisinfo', AnalysisInfo())
+            sample.analysisinfo = analysisinfo
             sample.analysisinfo.aneuploid = True
             sample.analysisinfo.save()
 
